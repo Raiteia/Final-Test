@@ -21,7 +21,8 @@ bool d3d::InitD3D(
 	int width, int height,
 	bool windowed,
 	D3DDEVTYPE deviceType,
-	IDirect3DDevice9** device)
+	IDirect3DDevice9** device,
+	POINT &pt)
 {
 	//
 	// Create the main application window.
@@ -47,7 +48,7 @@ bool d3d::InitD3D(
 	}
 		
 	HWND hwnd = 0;
-	hwnd = ::CreateWindow("Direct3D9App", "Direct3D9App", 
+	hwnd = ::CreateWindow("Direct3D9App", "A103082003", 
 		WS_EX_TOPMOST,
 		0, 0, width, height,
 		0 /*parent hwnd*/, 0 /* menu */, hInstance, 0 /*extra*/); 
@@ -60,7 +61,15 @@ bool d3d::InitD3D(
 
 	::ShowWindow(hwnd, SW_SHOW);
 	::UpdateWindow(hwnd);
+	//
+	//·Æ¹«³B²z
+	//
 
+	pt.x = width / 2;
+	pt.y = height / 2;
+	ClientToScreen(hwnd, &pt);
+	SetCursorPos(pt.x,pt.y);
+	ShowCursor(false);
 	//
 	// Init D3D: 
 	//
@@ -357,7 +366,7 @@ bool d3d::DrawBasicScene(IDirect3DDevice9* device, float scale)
 		// draw pillars
 		device->SetMaterial(&d3d::BLUE_MTRL);
 		device->SetTexture(0, 0);
-		for(int i = 0; i < 5; i++)
+		/*for(int i = 0; i < 5; i++)
 		{
 			D3DXMatrixTranslation(&T, -5.0f, 0.0f, -15.0f + (i * 7.5f));
 			P = R * T * S;
@@ -368,7 +377,7 @@ bool d3d::DrawBasicScene(IDirect3DDevice9* device, float scale)
 			P = R * T * S;
 			device->SetTransform(D3DTS_WORLD, &P);
 			pillar->DrawSubset(0);
-		}
+		}*/
 	}
 	return true;
 }

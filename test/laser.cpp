@@ -28,6 +28,7 @@ std::vector<IDirect3DTexture9*> Textures(0);
 
 const int Width  = 1024;
 const int Height = 768;
+POINT pt,mouse;
 
 pawn::Tank *tank = 0;
 
@@ -70,7 +71,7 @@ bool Display(float timeDelta)
 {
 	if( Device )
 	{
-		tank->update(timeDelta);
+		tank->update(timeDelta,mouse,pt);
 		static float cx = 0.0f;
 		static float cy = 0.0f;
 		static float cz = 0.0f;
@@ -79,16 +80,19 @@ bool Display(float timeDelta)
 		//
 		// Update the scene:
 		//
+
+		SetCursorPos(pt.x, pt.y);
+
 		tank->getAngle(angle,gunAngle);
 		tank->getTrans(cx, cy, cz);
 
 		if (::GetAsyncKeyState(VK_UP) & 0x8000f)
 		{
-			tank->move(3.0f*timeDelta);
+			tank->move(4.0f*timeDelta);
 		}
 		if (::GetAsyncKeyState(VK_DOWN) & 0x8000f)
 		{
-			tank->move(-3.0f*timeDelta);
+			tank->move(-4.0f*timeDelta);
 		}
 		if (::GetAsyncKeyState(VK_LEFT) & 0x8000f)
 			tank->rotate(50.0f*timeDelta);
@@ -109,8 +113,8 @@ bool Display(float timeDelta)
 		{
 			//TheCamera.pitch(-1.0f * timeDelta);
 		}
-		D3DXVECTOR3 pos(cx + 10.0f*cos(angle*(2 * D3DX_PI / 360)), cy+4.0f, cz + 10.0f*sin(angle*(2 * D3DX_PI / 360)));
-		D3DXVECTOR3 target(cx , cy+2.0f, cz );
+		D3DXVECTOR3 pos(cx + 10.0f*-(cos(gunAngle*(2 * D3DX_PI / 360))), cy+5.0f, cz + 10.0f*-(sin(gunAngle*(2 * D3DX_PI / 360))));
+		D3DXVECTOR3 target(cx , cy+4.0f, cz );
 		D3DXVECTOR3 up(0.0f, 1.0f, 0.0f);
 		D3DXMATRIX V;
 		D3DXMatrixLookAtLH(&V, &pos, &target, &up);
@@ -149,7 +153,10 @@ LRESULT CALLBACK d3d::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_DESTROY:
 		::PostQuitMessage(0);
 		break;
-		
+	case WM_MOUSEMOVE:
+		mouse.x = LOWORD(lParam);
+		mouse.y = HIWORD(lParam);
+		break;
 	case WM_KEYDOWN:
 		if( wParam == VK_ESCAPE )
 			::DestroyWindow(hwnd);
@@ -173,7 +180,7 @@ int WINAPI WinMain(HINSTANCE hinstance,
 				   int showCmd)
 {
 	if(!d3d::InitD3D(hinstance,
-		Width, Height, true, D3DDEVTYPE_HAL, &Device))
+		Width, Height, true, D3DDEVTYPE_HAL, &Device,pt))
 	{
 		::MessageBox(0, "InitD3D() - FAILED", 0, 0);
 		return 0;

@@ -27,7 +27,7 @@ Pawn::~Pawn()
 	d3d::Release<IDirect3DTexture9*>(_tex);
 }
 
-bool Pawn::init(IDirect3DDevice9* device, char* xFileName, ID3DXMesh* mesh, std::vector<D3DMATERIAL9> Mtrls, std::vector<IDirect3DTexture9*> textures)
+bool Pawn::init(IDirect3DDevice9* device, char* xFileName, ID3DXMesh* &mesh, std::vector<D3DMATERIAL9> &Mtrls, std::vector<IDirect3DTexture9*> &textures)
 {
 	// vertex buffer's size does not equal the number of particles in our system.  We
 	// use the vertex buffer to draw a portion of our particles at a time.  The arbitrary
@@ -52,7 +52,7 @@ bool Pawn::init(IDirect3DDevice9* device, char* xFileName, ID3DXMesh* mesh, std:
 		&mtrlBuffer,
 		0,
 		&numMtrls,
-		&_mesh);
+		&mesh);
 
 	if (FAILED(hr))
 	{
@@ -75,7 +75,7 @@ bool Pawn::init(IDirect3DDevice9* device, char* xFileName, ID3DXMesh* mesh, std:
 			mtrls[i].MatD3D.Ambient = mtrls[i].MatD3D.Diffuse;
 
 			// save the ith material
-			_mtrls.push_back(mtrls[i].MatD3D);
+			Mtrls.push_back(mtrls[i].MatD3D);
 
 			// check if the ith material has an associative texture
 			if (mtrls[i].pTextureFilename != 0)
@@ -88,12 +88,12 @@ bool Pawn::init(IDirect3DDevice9* device, char* xFileName, ID3DXMesh* mesh, std:
 					&tex);
 
 				// save the loaded texture
-				_textures.push_back(tex);
+				textures.push_back(tex);
 			}
 			else
 			{
 				// no texture for the ith subset
-				_textures.push_back(0);
+				textures.push_back(0);
 			}
 		}
 	}
@@ -103,7 +103,7 @@ bool Pawn::init(IDirect3DDevice9* device, char* xFileName, ID3DXMesh* mesh, std:
 											// Optimize the mesh.
 											//
 
-	hr = _mesh->OptimizeInplace(
+	hr = mesh->OptimizeInplace(
 		D3DXMESHOPT_ATTRSORT |
 		D3DXMESHOPT_COMPACT |
 		D3DXMESHOPT_VERTEXCACHE,
@@ -272,7 +272,9 @@ Tank::Tank(IDirect3DDevice9* device)
 {
 	_gunAngle = 0;
 	_isAttack = false;
-	Tank::init(device, "Tank.X", _mesh, _mtrls, _textures);
+	Tank::init(device, "tank.X", _mesh, _mtrls, _textures);
+	Tank::init(device, "gun.X", _mesh2, _mtrls2, _textures2);
+	Tank::buildCollision(_mesh);
 	_trans = D3DXVECTOR3(0.0f, -0.8f, 0.0f);
 	_scale = D3DXVECTOR3(0.07f, 0.07f, 0.07f);
 	_ro2 = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
@@ -297,9 +299,9 @@ void Tank::collision(Pawn c)
 	}
 }
 
-void Tank::update(float timeDelta)
+void Tank::update(float timeDelta,POINT mouse,POINT pt)
 {
-
+	_gunAngle -= (mouse.x - pt.x) / 20;
 	if (_angle > 360)
 		_angle = 0;
 	else if (_angle < 0)
@@ -309,10 +311,15 @@ void Tank::update(float timeDelta)
 	else if (_gunAngle < 0)
 		_gunAngle = 360;
 	_ro.y = _angle/180;
-	//_ro.z = sin(_angle*(2 * D3DX_PI / 360));
-	_ro2.x = cos(_gunAngle*(2 * D3DX_PI / 360));
-	_ro2.y = sin(_gunAngle*(2 * D3DX_PI / 360));
-	//Tank::collision();
+	_ro2.y = _gunAngle/180;
+	_boundingBox._max.x = _max.x*_ro.x + _trans.x;
+	_boundingBox._max.y = _max.y*_ro.y + _trans.y;
+	_boundingBox._max.z = _max.z*_ro.z + _trans.z;
+	_boundingBox._min.x = _min.x*_ro.x + _trans.x;
+	_boundingBox._min.y = _min.y*_ro.y + _trans.y;
+	_boundingBox._min.z = _min.z*_ro.z + _trans.z;
+
+	
 }
 
 void Tank::render()
@@ -332,7 +339,7 @@ void Tank::render()
 		_mesh->DrawSubset(i);
 	}
 
-	D3DXMatrixTranslation(&T, _trans.x, _trans.y, _trans.z);
+	D3DXMatrixTranslation(&T, _trans.x, _trans.y+30.0f*_scale.y, _trans.z);
 	D3DXMatrixScaling(&S, _scale.x, _scale.y, _scale.z);
 	D3DXMatrixRotationX(&Rx, -D3DX_PI * _ro2.x);
 	D3DXMatrixRotationY(&Ry, -D3DX_PI * _ro2.y);

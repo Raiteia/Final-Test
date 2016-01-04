@@ -35,7 +35,7 @@ namespace pawn
 		Pawn();
 		virtual ~Pawn();
 
-		virtual bool init(IDirect3DDevice9* device, char* xFileName, ID3DXMesh* mesh, std::vector<D3DMATERIAL9> Mtrls, std::vector<IDirect3DTexture9*> textures);
+		virtual bool init(IDirect3DDevice9* device, char* xFileName, ID3DXMesh* &mesh, std::vector<D3DMATERIAL9> &Mtrls, std::vector<IDirect3DTexture9*> &textures);
 
 		// sometimes we don't want to free the memory of a dead particle,
 		// but rather respawn it instead.
@@ -105,7 +105,7 @@ namespace pawn
 	public:
 		Tank(IDirect3DDevice9* device);
 		void collision(Pawn c);
-		void update(float timeDelta);
+		void update(float timeDelta,POINT mouse,POINT pt);
 		void render();
 		void getAngle(float &angle, float &gunAngle);
 		void move(float axis);
