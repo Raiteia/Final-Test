@@ -29,8 +29,19 @@ std::vector<IDirect3DTexture9*> Textures(0);
 const int Width  = 1024;
 const int Height = 768;
 POINT pt,mouse;
+const int background[10][10] = {{ 1,1,1,1,1,1,1,1,1,1 },
+								{ 1,0,0,0,0,0,0,0,0,1 },
+								{ 1,1,0,0,0,0,1,1,0,1 },
+								{ 1,0,0,1,0,1,1,1,0,1 }, 
+								{ 1,0,0,0,0,0,0,0,0,1 }, 
+								{ 1,0,1,1,0,1,0,1,0,1 },
+								{ 1,0,1,1,0,1,0,0,0,1 }, 
+								{ 1,0,1,1,0,1,1,1,0,1 }, 
+								{ 1,0,0,0,0,0,0,0,0,1 }, 
+								{ 1,1,1,1,1,1,1,1,1,1 } };
 
 pawn::Tank *tank = 0;
+pawn::Building *build[10] ;
 
 //
 // Framework Functions
@@ -41,6 +52,7 @@ bool Setup()
 	srand((unsigned int)time(0));
 
 	tank = new pawn::Tank(Device);
+	build[0] = new pawn::Building(Device);
 	//
 	// Create a basic scene.
 	//
@@ -53,7 +65,7 @@ bool Setup()
 	D3DXMATRIX proj;
 	D3DXMatrixPerspectiveFovLH(
 			&proj,
-			D3DX_PI / 4.0f, // 45 - degree
+			D3DX_PI / 3.0f, // 45 - degree
 			(float)Width / (float)Height,
 			1.0f,
 			1000.0f);
@@ -86,19 +98,19 @@ bool Display(float timeDelta)
 		tank->getAngle(angle,gunAngle);
 		tank->getTrans(cx, cy, cz);
 
-		if (::GetAsyncKeyState(VK_UP) & 0x8000f)
+		if (::GetAsyncKeyState('W') & 0x8000f)
 		{
-			tank->move(4.0f*timeDelta);
+			tank->move(20.0f*timeDelta);
 		}
-		if (::GetAsyncKeyState(VK_DOWN) & 0x8000f)
+		if (::GetAsyncKeyState('S') & 0x8000f)
 		{
-			tank->move(-4.0f*timeDelta);
+			tank->move(-20.0f*timeDelta);
 		}
-		if (::GetAsyncKeyState(VK_LEFT) & 0x8000f)
-			tank->rotate(50.0f*timeDelta);
+		if (::GetAsyncKeyState('A') & 0x8000f)
+			tank->rotate(80.0f*timeDelta);
 		
-		if (::GetAsyncKeyState(VK_RIGHT) & 0x8000f)
-			tank->rotate(-50.0f*timeDelta);
+		if (::GetAsyncKeyState('D') & 0x8000f)
+			tank->rotate(-80.0f*timeDelta);
 
 		if( ::GetAsyncKeyState('N') & 0x8000f )
 			//TheCamera.strafe(-4.0f * timeDelta);
@@ -132,6 +144,7 @@ bool Display(float timeDelta)
 		Device->SetTransform(D3DTS_WORLD, &I);
 
 		d3d::DrawBasicScene(Device, 1.0f);
+		build[0]->render();
 		tank->render();
 		Device->SetTransform(D3DTS_WORLD, &I);
 

@@ -123,7 +123,7 @@ namespace pawn
 	class Building : public Pawn
 	{
 	public:
-		Building();
+		Building(IDirect3DDevice9* device);
 		void collision(Pawn c);
 		void update(float timeDelta);
 	private:

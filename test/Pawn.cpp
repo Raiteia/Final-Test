@@ -275,7 +275,7 @@ Tank::Tank(IDirect3DDevice9* device)
 	Tank::init(device, "tank.X", _mesh, _mtrls, _textures);
 	Tank::init(device, "gun.X", _mesh2, _mtrls2, _textures2);
 	Tank::buildCollision(_mesh);
-	_trans = D3DXVECTOR3(0.0f, -0.8f, 0.0f);
+	_trans = D3DXVECTOR3(0.0f, 2.0f, 0.0f);
 	_scale = D3DXVECTOR3(0.07f, 0.07f, 0.07f);
 	_ro2 = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 }
@@ -385,9 +385,13 @@ void Tank::getTrans(float &x, float &y, float &z)
 //*****************************************************************************
 // Building
 //****************
-Building::Building()
+Building::Building(IDirect3DDevice9* device)
 {
 	_isAttack = false;
+	Building::init(device, "build1.X", _mesh, _mtrls, _textures);
+	Building::buildCollision(_mesh);
+	_trans = D3DXVECTOR3(10.0f, 0.0f, 10.0f);
+	_scale = D3DXVECTOR3(0.2f, 0.2f, 0.2f);
 }
 
 void Building::collision(Pawn c)

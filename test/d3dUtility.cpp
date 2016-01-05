@@ -307,13 +307,13 @@ bool d3d::DrawBasicScene(IDirect3DDevice9* device, float scale)
 		Vertex* v = 0;
 		floor->Lock(0, 0, (void**)&v, 0);
 
-		v[0] = Vertex(-20.0f, -2.5f, -20.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f);
-		v[1] = Vertex(-20.0f, -2.5f,  20.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f);
-		v[2] = Vertex( 20.0f, -2.5f,  20.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f);
+		v[0] = Vertex(-20.0f, 0.0f, -20.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f);
+		v[1] = Vertex(-20.0f, 0.0f,  20.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f);
+		v[2] = Vertex( 20.0f, 0.0f,  20.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f);
 
-		v[3] = Vertex(-20.0f, -2.5f, -20.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f);
-		v[4] = Vertex( 20.0f, -2.5f,  20.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f);
-		v[5] = Vertex( 20.0f, -2.5f, -20.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f);
+		v[3] = Vertex(-20.0f, 0.0f, -20.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f);
+		v[4] = Vertex( 20.0f, 0.0f,  20.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f);
+		v[5] = Vertex( 20.0f, 0.0f, -20.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f);
 
 		floor->Unlock();
 
