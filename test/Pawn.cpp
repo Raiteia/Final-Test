@@ -3,6 +3,7 @@
 #include <list>
 #include <cstdlib>
 #include "Pawn.h"
+#include <ctime>
 
 using namespace pawn;
 
@@ -11,7 +12,7 @@ Pawn::Pawn()
 	_device = 0;
 	_vb = 0;
 	_tex = 0;
-	_health = 0;
+	_health = 50;
 	_isAttack = 0;
 	_group = 0;
 	_canWalk = 0;
@@ -19,6 +20,7 @@ Pawn::Pawn()
 	_trans = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	_ro = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	_scale = D3DXVECTOR3(1.0f, 1.0f, 1.0f);
+	
 }
 
 Pawn::~Pawn()
@@ -142,23 +144,27 @@ bool Pawn::buildCollision(ID3DXMesh* mesh)
 
 void Pawn::render()
 {
-	D3DXMATRIX T, R, P, S;
-	D3DXMatrixTranslation(&T, _trans.x, _trans.y, _trans.z);
-	D3DXMatrixScaling(&S, _scale.x, _scale.y, _scale.z);
-	D3DXMatrixRotationX(&R, -D3DX_PI * _ro.x);
-	D3DXMatrixRotationY(&R, -D3DX_PI * _ro.y);
-	D3DXMatrixRotationZ(&R, -D3DX_PI * _ro.z);
-	P = S * R * T;
-	_device->SetTransform(D3DTS_WORLD, &P);
-	for (int i = 0; i < _mtrls.size(); i++)
+	if (_health > 0)
 	{
-		_device->SetMaterial(&_mtrls[i]);
-		_device->SetTexture(0, _textures[i]);
-		_mesh->DrawSubset(i);
+		D3DXMATRIX T, Rx, P, S, Ry, Rz;
+		D3DXMatrixTranslation(&T, _trans.x, _trans.y, _trans.z);
+		D3DXMatrixScaling(&S, _scale.x, _scale.y, _scale.z);
+		D3DXMatrixRotationX(&Rx, -D3DX_PI * _ro.x);
+		D3DXMatrixRotationY(&Ry, -D3DX_PI * _ro.y);
+		D3DXMatrixRotationZ(&Rz, -D3DX_PI * _ro.z);
+		P = S * Rx*Ry*Rz * T;
+		_device->SetTransform(D3DTS_WORLD, &P);
+		for (int i = 0; i < _mtrls.size(); i++)
+		{
+			_device->SetMaterial(&_mtrls[i]);
+			_device->SetTexture(0, _textures[i]);
+			_mesh->DrawSubset(i);
+		}
 	}
+	
 }
 
-bool Pawn::scan(d3d::BoundingBox box,float range)
+bool Pawn::scan(Pawn* box,float range)
 {
 	float x, y;
 	x = 0.0f;
@@ -171,7 +177,7 @@ bool Pawn::scan(d3d::BoundingBox box,float range)
 		t.x = x;
 		t.y = _trans.y;
 		t.z = y;
-		if (box.isPointInside(t))
+		if (box->collisionSystem(t))
 		{
 			return true;
 		}
@@ -181,12 +187,12 @@ bool Pawn::scan(d3d::BoundingBox box,float range)
 
 void Pawn::update(float timeDelta)
 {
-	_boundingBox._max.x = _max.x*_ro.x + _trans.x;
-	_boundingBox._max.y = _max.y*_ro.y + _trans.y;
-	_boundingBox._max.z = _max.z*_ro.z + _trans.z;
-	_boundingBox._min.x = _min.x*_ro.x + _trans.x;
-	_boundingBox._min.y = _min.y*_ro.y + _trans.y;
-	_boundingBox._min.z = _min.z*_ro.z + _trans.z;
+	_boundingBox._max.x = _max.x*_scale.x + _trans.x;
+	_boundingBox._max.y = _max.y*_scale.y + _trans.y;
+	_boundingBox._max.z = _max.z*_scale.z + _trans.z;
+	_boundingBox._min.x = _min.x*_scale.x + _trans.x;
+	_boundingBox._min.y = _min.y*_scale.y + _trans.y;
+	_boundingBox._min.z = _min.z*_scale.z + _trans.z;
 }
 
 bool Pawn::collisionSystem(D3DXVECTOR3 t)
@@ -202,7 +208,8 @@ void Pawn::isAttack(bool &a)
 }
 void Pawn::destory()
 {
-	_trans.y = -999999999.0f;
+	_trans.y = -999.0f;
+	_canWalk = 0;
 }
 
 void Pawn::group(int &g)
@@ -214,45 +221,372 @@ void Pawn::health(int var)
 {
 	_health += var;
 }
+void Pawn::getTrans(float &x, float &y, float &z)
+{
+	x = _trans.x;
+	y = _trans.y;
+	z = _trans.z;
+}
+
+bool Pawn::canWalk()
+{
+	if (_canWalk)
+		return true;
+	else
+		return false;
+}
+void Pawn::collision(Pawn* c)
+{
+	0;
+}
+
+void Pawn::getBullet(Pawn* &b,int i)
+{
+	0;
+}
+void Pawn::setDir(float angle,D3DXVECTOR3 trans)
+{
+	0;
+}
 
 //*****************************************************************************
 // enemyTank
 //****************
 
-enemyTank::enemyTank()
+enemyTank::enemyTank(IDirect3DDevice9* device)
 {
+	srand(rand());
+	_health = 50;
+	int a = rand() % 4;
 	_isAttack = false;
-}
-
-void enemyTank::collision(Pawn c)
-{
-	int group;
-	bool attack;
-	c.isAttack(attack);
-	if (c.collisionSystem(_trans))
+	_canAttack = 1;
+	_canWalk = 1;
+	_group = 2;
+	_bulletCount = 0;
+	_isDead = 0;
+	switch (a)
 	{
-		if (attack)
-		{
-			c.group(group);
-			c.destory();
-			if (group == 1)
-			{
-				_health -= 50;
-			}
-		}
+	case 0:
+		_trans = D3DXVECTOR3(116.0f, 4.0f, 88.0f);
+		break;
+	case 1:
+		_trans = D3DXVECTOR3(116.0f, 4.0f, -117.0f);
+		break;
+	case 2:
+		_trans = D3DXVECTOR3(-92.0f, 4.0f, 88.0f);
+		break;
+	case 3:
+		_trans = D3DXVECTOR3(-92.0f, 4.0f, -117.0f);
+		break;
+	}
+	_scale = D3DXVECTOR3(0.14f, 0.14f, 0.14f);
+	enemyTank::init(device, "enemyTank.X", _mesh, _mtrls, _textures);
+	enemyTank::buildCollision(_mesh);
+	for (int i = 0; i < 3; i++)
+	{
+		_bullet[i] = new Bullet(device, _group);
 	}
 }
 
-void enemyTank::update(float timeDelta)
+void enemyTank::collision(Pawn *c)
 {
+	int group;
+	bool attack;
+	D3DXVECTOR3 otherTrans;
+	Pawn* b;
+	float x, y, z;
+	c->getTrans(x, y, z);
+	otherTrans.x = x;
+	otherTrans.y = y;
+	otherTrans.z = z;
+	c->isAttack(attack);
+	c->group(group);
+	if (group == 1)
+	{
+		
+		for (int i = 0; i < 3; i++)
+		{
+			c->getBullet(b,i);
+			b->getTrans(x, y, z);
+			otherTrans.x = x;
+			otherTrans.y = y;
+			otherTrans.z = z;
+			if (this->collisionSystem(otherTrans))
+			{
+				b->destory();
+				_health =0;
+			}
+		}
 
+	}
+
+}
+
+void enemyTank::update(float timeDelta,Pawn* t)
+{
+	_canAttack += timeDelta;
+	int count = 0;
+	count = rand() % 4;
+	if (_canWalk)
+	{
+		if (floor(_trans.x) == 116 && floor(_trans.z) == 88)
+		{
+			if (count < 2)
+			{
+				_moveState = 2;
+				_trans.z += -1;
+			}
+
+			else
+			{
+				_moveState = 3;
+				_trans.x += -1;
+			}
+		}
+		else if (floor(_trans.x) == 116 && floor(_trans.z) == 0)
+		{
+			if (count < 2)
+			{
+				_moveState = 3;
+				_trans.x += -1;
+			}
+			else if (count == 2)
+			{
+				_moveState = 2;
+				_trans.z += -1;
+			}
+			else
+			{
+				_moveState = 1;
+				_trans.z += -1;
+			}
+		}
+		else if (floor(_trans.x) == 116 && floor(_trans.z) == -117)
+		{
+			if (count < 2)
+			{
+				_moveState = 1;
+				_trans.z += 1;
+			}
+			else
+			{
+				_moveState = 2;
+				_trans.x += -1;
+			}
+		}
+		else if (floor(_trans.x) == 0 && floor(_trans.z) == 88)
+		{
+			if (count < 2)
+			{
+				_moveState = 2;
+				_trans.z += -1;
+			}
+			else if (count == 2)
+			{
+				_moveState = 3;
+				_trans.x += -1;
+			}
+			else
+			{
+				_moveState = 4;
+				_trans.x += 1;
+			}
+		}
+		else if (floor(_trans.x) == 0 && floor(_trans.z) == 0)
+		{
+			if (count == 0)
+			{
+				_moveState = 1;
+				_trans.z += 1;
+			}
+			else if (count == 1)
+			{
+				_moveState = 2;
+				_trans.z += -1;
+			}
+			else if (count == 2)
+			{
+				_moveState = 3;
+				_trans.x += -1;
+			}
+			else
+			{
+				_moveState = 4;
+				_trans.x += 1;
+			}
+		}
+		else if (floor(_trans.x) == 0 && floor(_trans.z) == -117)
+		{
+			if (count < 2)
+			{
+				_moveState = 1;
+				_trans.z += 1;
+			}
+			else if (count == 2)
+			{
+				_moveState = 3;
+				_trans.x += -1;
+			}
+			else
+			{
+				_moveState = 4;
+				_trans.x += 1;
+			}
+		}
+		else if (floor(_trans.x) == -92 && floor(_trans.z) == 88)
+		{
+			if (count < 2)
+			{
+				_moveState = 2;
+				_trans.z += -1;
+			}
+			else
+			{
+				_moveState = 4;
+				_trans.x += 1;
+			}
+		}
+		else if (floor(_trans.x) == -92 && floor(_trans.z) == 0)
+		{
+			if (count < 2)
+			{
+				_moveState = 4;
+				_trans.x += 1;
+			}
+			else if (count == 2)
+			{
+				_moveState = 2;
+				_trans.z += -1;
+			}
+			else
+			{
+				_moveState = 1;
+				_trans.z += 1;
+			}
+		}
+		else if (floor(_trans.x) == -92 && floor(_trans.z) == -117)
+		{
+			if (count < 2)
+			{
+				_moveState = 1;
+				_trans.z += 1;
+			}
+			else
+			{
+				_moveState = 4;
+				_trans.x += 1;
+			}
+		}
+
+		if (scan(t, 100))
+		{
+			if (_canAttack >= 1.5)
+			{
+				if (_bulletCount >= 3)
+					_bulletCount = 0;
+				if (!(_bullet[_bulletCount]->canWalk()))
+				{
+					D3DXVECTOR3 a;
+					a = _trans;
+					a.y = _trans.y ;
+					_bullet[_bulletCount]->setDir(_angle, a);
+					_bulletCount++;
+					_canAttack = 0;
+				}
+			}
+		}
+		else
+		{
+			switch (_moveState)
+			{
+			case 1:
+				_angle = 90;
+				_trans.z += 30 * timeDelta;
+				break;
+			case 2:
+				_angle = 270;
+				_trans.z += -30 * timeDelta;
+				break;
+			case 3:
+				_angle = 180;
+				_trans.x += -30 * timeDelta;
+				break;
+			case 4:
+				_angle = 0;
+				_trans.x += 30 * timeDelta;
+				break;
+			}
+		}
+	}
+	if (_isDead == 0 && _health <= 0)
+	{
+		this->dead();
+	}
+	for (int i = 0; i < 3; i++)
+	{
+		_bullet[i]->update(timeDelta);
+	}
+	_ro.y = _angle / 180;
+	_boundingBox._max.x = _max.x*_scale.x + _trans.x;
+	_boundingBox._max.y = _max.y*_scale.y + _trans.y;
+	_boundingBox._max.z = _max.z*_scale.z + _trans.z;
+	_boundingBox._min.x = _min.x*_scale.x + _trans.x;
+	_boundingBox._min.y = _min.y*_scale.y + _trans.y;
+	_boundingBox._min.z = _min.z*_scale.z + _trans.z;
+}
+
+void enemyTank::getBullet(Pawn* &b,int i)
+{
+	b = _bullet[i];
+}
+
+void enemyTank::render()
+{
+	D3DXMATRIX T, Rx, P, S, Ry, Rz;
+	D3DXMatrixTranslation(&T, _trans.x, _trans.y, _trans.z);
+	D3DXMatrixScaling(&S, _scale.x, _scale.y, _scale.z);
+	D3DXMatrixRotationX(&Rx, -D3DX_PI * _ro.x);
+	D3DXMatrixRotationY(&Ry, -D3DX_PI * _ro.y);
+	D3DXMatrixRotationZ(&Rz, -D3DX_PI * _ro.z);
+	P = S * Rx*Ry*Rz * T;
+	_device->SetTransform(D3DTS_WORLD, &P);
+	for (int i = 0; i < _mtrls.size(); i++)
+	{
+		_device->SetMaterial(&_mtrls[i]);
+		_device->SetTexture(0, _textures[i]);
+		_mesh->DrawSubset(i);
+	}
+	for (int i = 0; i < 3; i++)
+	{
+		_bullet[i]->render();
+	}
+}
+
+void enemyTank::dead()
+{
+	_canWalk = 0;
+	_isDead = 1;
 }
 //*****************************************************************************
 // Bullet
 //****************
-Bullet::Bullet()
+Bullet::Bullet(IDirect3DDevice9* device,int g)
 {
 	_isAttack = true;
+	_group = g;
+	if (_group == 1)
+	{
+		init(device, "bullet1.X", _mesh, _mtrls, _textures);
+	}
+	else if (_group == 2)
+	{
+		init(device, "bullet2.X", _mesh, _mtrls, _textures);
+	}
+	Bullet::buildCollision(_mesh);
+	_trans = D3DXVECTOR3(0.0f, -999.0f, 0.0f);
+	_scale = D3DXVECTOR3(1.35f, 0.35f, 0.35f);
+	_canWalk = 0;
+	_group = 0;
 }
 
 void Bullet::collision(Pawn c)
@@ -262,7 +596,30 @@ void Bullet::collision(Pawn c)
 
 void Bullet::update(float timeDelta)
 {
+	_ro.y = _angle / 180;
+	_boundingBox._max.x = _max.x*_scale.x + _trans.x;
+	_boundingBox._max.y = _max.y*_scale.y + _trans.y;
+	_boundingBox._max.z = _max.z*_scale.z + _trans.z;
+	_boundingBox._min.x = _min.x*_scale.x + _trans.x;
+	_boundingBox._min.y = _min.y*_scale.y + _trans.y;
+	_boundingBox._min.z = _min.z*_scale.z + _trans.z;
+	if (_canWalk)
+	{
+		_trans.x += 200 * cos(_angle*D3DX_PI / 180)*timeDelta;
+		_trans.z += 200 * sin(_angle*D3DX_PI / 180)*timeDelta;
+		_trans.y += -5 * timeDelta;
+	}
+	if (_trans.y < 0)
+		destory();
+}
 
+void Bullet::setDir(float angle, D3DXVECTOR3 trans)
+{
+	_angle = angle;
+	_trans.x = trans.x + 8*cos(_angle*D3DX_PI / 180);
+	_trans.z = trans.z + 8*sin(_angle*D3DX_PI / 180);
+	_trans.y = trans.y;
+	_canWalk = 1;
 }
 
 //*****************************************************************************
@@ -270,31 +627,68 @@ void Bullet::update(float timeDelta)
 //****************
 Tank::Tank(IDirect3DDevice9* device)
 {
+	_health = 50;
 	_gunAngle = 0;
 	_isAttack = false;
+	_group = 1;
 	Tank::init(device, "tank.X", _mesh, _mtrls, _textures);
 	Tank::init(device, "gun.X", _mesh2, _mtrls2, _textures2);
 	Tank::buildCollision(_mesh);
-	_trans = D3DXVECTOR3(0.0f, 2.0f, 0.0f);
-	_scale = D3DXVECTOR3(0.07f, 0.07f, 0.07f);
+	_trans = D3DXVECTOR3(0.0f, 4.0f, 0.0f);
+	_scale = D3DXVECTOR3(0.14f, 0.14f, 0.14f);
 	_ro2 = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	_canAttack = 1;
+	_isDead = 0;
+	_canWalk = 1;
+	for (int i = 0; i < 3; i++)
+	{
+		_bullet[i] = new Bullet(device,_group);
+	}
 }
 
-void Tank::collision(Pawn c)
+void Tank::collision(Pawn *c)
 {
 	int group;
 	bool attack;
-	c.isAttack(attack);
-	if (c.collisionSystem(_trans))
+	D3DXVECTOR3 otherTrans,ct;
+	Pawn* b;
+	float x, y, z;
+	c->getTrans(x,y,z);
+	otherTrans.x = x;
+	otherTrans.y = y;
+	otherTrans.z = z;
+	c->isAttack(attack);
+	c->group(group);
+	if (group==2)
 	{
-		if (attack)
+		
+		for (int i = 0; i < 3; i++)
 		{
-			c.group(group);
-			c.destory();
-			if (group == 1)
+			c->getBullet(b,i);
+			b->getTrans(x, y, z);
+			otherTrans.x = x;
+			otherTrans.y = y;
+			otherTrans.z = z;
+			if (collisionSystem(otherTrans))
 			{
+				b->destory();
 				_health -= 50;
 			}
+		}
+		
+	}
+	else
+	{
+		ct.x = _trans.x + 12 * cos(_angle * D3DX_PI / 180);
+		ct.z = _trans.z + 12 * sin(_angle * D3DX_PI / 180);
+		ct.y = 0;
+		if (c->collisionSystem(ct))
+		{
+			_trans = _ptrans;
+		}
+		for (int i = 0; i < 3; i++)
+		{
+			c->collision(_bullet[i]);
 		}
 	}
 }
@@ -312,14 +706,21 @@ void Tank::update(float timeDelta,POINT mouse,POINT pt)
 		_gunAngle = 360;
 	_ro.y = _angle/180;
 	_ro2.y = _gunAngle/180;
-	_boundingBox._max.x = _max.x*_ro.x + _trans.x;
-	_boundingBox._max.y = _max.y*_ro.y + _trans.y;
-	_boundingBox._max.z = _max.z*_ro.z + _trans.z;
-	_boundingBox._min.x = _min.x*_ro.x + _trans.x;
-	_boundingBox._min.y = _min.y*_ro.y + _trans.y;
-	_boundingBox._min.z = _min.z*_ro.z + _trans.z;
-
-	
+	_boundingBox._max.x = _max.x*_scale.x + _trans.x;
+	_boundingBox._max.y = _max.y*_scale.y + _trans.y;
+	_boundingBox._max.z = _max.z*_scale.z + _trans.z;
+	_boundingBox._min.x = _min.x*_scale.x + _trans.x;
+	_boundingBox._min.y = _min.y*_scale.y + _trans.y;
+	_boundingBox._min.z = _min.z*_scale.z + _trans.z;
+	for (int i = 0; i < 3; i++)
+	{
+		_bullet[i]->update(timeDelta);
+	}
+	_canAttack += timeDelta;
+	if (_isDead == 0 && _health <= 0)
+	{
+		Tank::dead();
+	}
 }
 
 void Tank::render()
@@ -352,6 +753,10 @@ void Tank::render()
 		_device->SetTexture(0, _textures2[i]);
 		_mesh2->DrawSubset(i);
 	}
+	for (int i = 0; i < 3; i++)
+	{
+		_bullet[i]->render();
+	}
 }
 
 void Tank::getAngle(float &angle, float &gunAngle)
@@ -361,48 +766,105 @@ void Tank::getAngle(float &angle, float &gunAngle)
 }
 void Tank::move(float axis)
 {
-	_trans.x = _trans.x + axis * cos(_angle * 2 * D3DX_PI / 360);
-	_trans.z = _trans.z + axis * sin(_angle * 2 * D3DX_PI / 360);
+	if (_canWalk)
+	{
+		_ptrans = _trans;
+		_trans.x = _trans.x + axis * cos(_angle * 2 * D3DX_PI / 360);
+		_trans.z = _trans.z + axis * sin(_angle * 2 * D3DX_PI / 360);
+	}
 }
 
 void Tank::rotate(float axis)
 {
+	if(_canWalk)
 	_angle += axis;
 }
 
 void Tank::gunRotate(float axis)
 {
+	if (_canWalk)
 	_gunAngle += axis;
 }
-void Tank::getTrans(float &x, float &y, float &z)
+
+void Tank::Attack()
 {
-	x = _trans.x;
-	y = _trans.y;
-	z = _trans.z;
+	if (_canWalk)
+	{
+		if (_canAttack> 1)
+		{
+			if (_bulletCount >= 3)
+				_bulletCount = 0;
+			if (!(_bullet[_bulletCount]->canWalk()))
+			{
+				D3DXVECTOR3 a;
+				a = _trans;
+				a.y = _trans.y + 30.0f*_scale.y;
+				_bullet[_bulletCount]->setDir(_gunAngle, a);
+				_bulletCount++;
+				_canAttack = 0;
+			}
+		}
+
+	}
+	
 }
 
+void Tank::getBullet(Pawn* &b,int i)
+{
+	b = _bullet[i];
+}
+
+void Tank::dead()
+{
+	_canWalk = 0;
+	_isDead = 1;
+}
 
 //*****************************************************************************
 // Building
 //****************
-Building::Building(IDirect3DDevice9* device)
+Building::Building(IDirect3DDevice9* device,float x,float z)
 {
+	srand(rand());
+	int s = rand() % 2;
 	_isAttack = false;
-	Building::init(device, "build1.X", _mesh, _mtrls, _textures);
+	if (s)
+	{
+		Building::init(device, "build1.X", _mesh, _mtrls, _textures);
+	}
+	else
+	{
+		Building::init(device, "build2.X", _mesh, _mtrls, _textures);
+	}
 	Building::buildCollision(_mesh);
-	_trans = D3DXVECTOR3(10.0f, 0.0f, 10.0f);
-	_scale = D3DXVECTOR3(0.2f, 0.2f, 0.2f);
+	_trans = D3DXVECTOR3(x, 0.0f, z);
+	_scale = D3DXVECTOR3(0.4f, 0.4f, 0.4f);
+	_boundingBox._max.x = _max.x*_scale.x + _trans.x;
+	_boundingBox._max.y = _max.y*_scale.y + _trans.y;
+	_boundingBox._max.z = _max.z*_scale.z + _trans.z;
+	_boundingBox._min.x = _min.x*_scale.x + _trans.x;
+	_boundingBox._min.y = _min.y*_scale.y + _trans.y;
+	_boundingBox._min.z = _min.z*_scale.z + _trans.z;
+	_max = _max;
+	_min = _min;
+	
 }
 
-void Building::collision(Pawn c)
+void Building::collision(Pawn* c)
 {
 	bool attack;
-	c.isAttack(attack);
-	if (c.collisionSystem(_trans))
+	c->isAttack(attack);
+	D3DXVECTOR3 otherTrans;
+	float x, y, z;
+	c->getTrans(x, y, z);
+	otherTrans.x = x;
+	otherTrans.y = y;
+	otherTrans.z = z;
+	if (collisionSystem(otherTrans))
 	{
 		if (attack)
 		{
-			c.destory();
+			c->destory();
 		}
 	}
 }
