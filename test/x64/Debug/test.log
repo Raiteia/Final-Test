@@ -1,0 +1,11 @@
+﻿  pSystem.cpp
+f:\git\final-test\test\d3dutility.h(16): fatal error C1083: 無法開啟包含檔案: 'd3dx9.h': No such file or directory
+  Pawn.cpp
+f:\git\final-test\test\d3dutility.h(16): fatal error C1083: 無法開啟包含檔案: 'd3dx9.h': No such file or directory
+  laser.cpp
+f:\git\final-test\test\d3dutility.h(16): fatal error C1083: 無法開啟包含檔案: 'd3dx9.h': No such file or directory
+  d3dUtility.cpp
+f:\git\final-test\test\d3dutility.h(16): fatal error C1083: 無法開啟包含檔案: 'd3dx9.h': No such file or directory
+  camera.cpp
+f:\git\final-test\test\camera.h(16): fatal error C1083: 無法開啟包含檔案: 'd3dx9.h': No such file or directory
+  正在產生程式碼...
